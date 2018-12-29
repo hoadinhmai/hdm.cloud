@@ -14,3 +14,4 @@ phases:
      - echo "post_build step"
      - aws s3 rm s3://hdm.cloud/cloudformation.yaml
      - aws s3 rm s3://hdm.cloud/buildspec.yaml
+     - aws s3 rm s3://hdm.cloud/README.md
