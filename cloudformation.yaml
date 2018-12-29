@@ -1,0 +1,96 @@
+AWSTemplateFormatVersion: '2010-09-09'
+# Transform: 'AWS::Serverless-2016-10-31'
+Description: Create a Static WebSite with S3
+Parameters:
+  BucketName:
+    Description: Domain or subdomain name for your website
+    Type: String
+    Default: beta.hdm.cloud
+Mappings:
+  RegionMap:
+    ap-southeast-2:
+      hostedzoneID: Z1WCIGYICN2BYD
+      websiteendpoint: s3-website-ap-southeast-2.amazonaws.com
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      BucketName: !Sub ${BucketName}
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+    #DeletionPolicy: Retain
+  # TODO: Add bucket policy for CodeBuild service role to perform aws s3 sync --delete
+  S3BucketPolicy: 
+    Type: AWS::S3::BucketPolicy
+    Properties: 
+      Bucket: 
+        !Ref S3Bucket
+      PolicyDocument: 
+        Statement: 
+          - 
+            Action: 
+              - "s3:GetObject"
+            Effect: "Allow"
+            Resource: 
+              Fn::Join: 
+                - ""
+                - 
+                  - "arn:aws:s3:::"
+                  - 
+                    !Ref S3Bucket
+                  - "/*"
+            Principal: "*"
+            Condition: 
+              StringLike: 
+                aws:Referer: 
+                  - Fn::Join: 
+                      - ""
+                      - 
+                        - "http://www."
+                        - 
+                          !Ref S3Bucket
+                        - "/*"
+                  - Fn::Join: 
+                      - ""
+                      - 
+                        - "http://"
+                        - 
+                          !Ref S3Bucket
+                        - "/*"
+  # WWWBucket:
+  #   Type: AWS::S3::Bucket
+  #   Properties:
+  #     BucketName: !Sub
+  #       - www.${Domain}
+  #       - Domain: !Sub ${BucketName}
+  #     AccessControl: BucketOwnerFullControl
+  #     WebsiteConfiguration:
+  #       RedirectAllRequestsTo:
+  #         HostName: !Ref S3Bucket
+  
+  Route53DomainName:
+    Type: AWS::Route53::RecordSet
+    DependsOn: S3Bucket
+    Properties:
+      Name: !Join ['', [!Ref 'BucketName', .]]
+      HostedZoneName: hdm.cloud.
+      Type: A
+      AliasTarget:
+        HostedZoneId: !FindInMap [ RegionMap, !Ref 'AWS::Region', hostedzoneID]
+        DNSName: !FindInMap [RegionMap,!Ref 'AWS::Region', websiteendpoint]
+
+Outputs:  
+  S3BucketName:
+    Value: !Sub ${BucketName}
+    Description: Name for bucket on S3    
+  S3WebsiteURL:
+    Value: !GetAtt [S3Bucket, WebsiteURL]
+    Description: URL for website hosted on S3
+  S3BucketDomainName:
+    Value:  !GetAtt [S3Bucket, DomainName]
+    Description: Bucket Domain Name of S3 bucket
+  S3HostedZoneID:
+    Value: !FindInMap [ RegionMap, !Ref 'AWS::Region', hostedzoneID]
+    Description: Hosted Zone ID of S3 bucket

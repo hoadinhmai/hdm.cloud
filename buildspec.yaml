@@ -1,0 +1,16 @@
+version: 0.2
+phases:
+ install:
+   commands:
+     - echo "install step"
+ pre_build:
+   commands:
+     - echo "pre_build step"
+ build:
+   commands:
+     - aws s3 sync --delete . "s3://hdm.cloud"
+ post_build:
+   commands:
+     - echo "post_build step"
+     - aws s3 rm s3://hdm.cloud/cloudformation.yaml
+     - aws s3 rm s3://hdm.cloud/buildspec.yaml
