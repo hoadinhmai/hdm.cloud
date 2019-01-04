@@ -120,6 +120,7 @@ resource "aws_iam_role_policy" "codebuild_policy" {
     {
       "Action": [
        "s3:PutObject",
+       "s3:PutObjectAcl",
        "s3:DeleteObject",
        "s3:GetObject",
        "s3:GetObjectVersion",
