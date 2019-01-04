@@ -8,10 +8,10 @@ phases:
      - echo "pre_build step"
  build:
    commands:
-     - aws s3 sync --delete . "s3://hdm.cloud"
+    - aws s3 sync --delete . "s3://hdm.cloud" --exclude "*.yaml"
  post_build:
    commands:
      - echo "post_build step"
-     - aws s3 rm s3://hdm.cloud/cloudformation.yaml
-     - aws s3 rm s3://hdm.cloud/buildspec.yaml
+     - aws s3 rm s3://hdm.cloud/terraform.tf
+     - aws s3 rm s3://hdm.cloud/Dockerfile
      - aws s3 rm s3://hdm.cloud/README.md
