@@ -9,3 +9,6 @@ A personal serverless website
 ## Terraform usage
 Provision AWS CodePipeline and CodeBuild project
 `terraform apply -var "github_token=token"`
+
+## Container usage
+Each commit to master triggers a Gitlab CI build of a new Docker image (Nginx:alpine + static content). Image is pushed to Gitlab registry and ready to be consumed by ECS Fargate CloudFormation deployment.
