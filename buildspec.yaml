@@ -12,6 +12,6 @@ phases:
  post_build:
    commands:
      - echo "post_build step"
-     - aws s3 rm s3://hdm.cloud/terraform.tf
+     - aws s3 rm s3://hdm.cloud/terraform --recursive
      - aws s3 rm s3://hdm.cloud/Dockerfile
      - aws s3 rm s3://hdm.cloud/README.md
