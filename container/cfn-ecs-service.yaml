@@ -110,7 +110,8 @@ Resources:
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
-          SecurityGroups: !Ref 'FargateContainerSecurityGroup'
+          SecurityGroups: 
+            - !Ref 'FargateContainerSecurityGroup'
           Subnets:
             - !Ref PrivateSubnetOne
             - !Ref PrivateSubnetTwo
