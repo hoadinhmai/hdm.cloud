@@ -1,0 +1,30 @@
+Description: >
+
+  This template deploys two nested CFN stacks.
+
+  Last Modified: January 2019
+  Author: Hoa Mai
+
+Resources:
+  Networking:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3-ap-southeast-2.amazonaws.com/hdm-s3-common-s3bucket-okportar9irk/CODEBUILD_BUILD_ID/cfn-ecs-networking.yaml
+
+  Service:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3-ap-southeast-2.amazonaws.com/hdm-s3-common-s3bucket-okportar9irk/CODEBUILD_BUILD_ID/cfn-ecs-service.yaml
+      Parameters:
+        ECSTaskExecutionRole: !GetAtt Networking.Outputs.ECSTaskExecutionRole
+        ClusterName: !GetAtt Networking.Outputs.ClusterName
+        FargateContainerSecurityGroup: !GetAtt Networking.Outputs.FargateContainerSecurityGroup
+        PrivateSubnetOne: !GetAtt Networking.Outputs.PrivateSubnetOne
+        PrivateSubnetTwo: !GetAtt Networking.Outputs.PrivateSubnetTwo
+        VPCId: !GetAtt Networking.Outputs.VPCId
+        PublicListener: !GetAtt Networking.Outputs.PublicListener
+
+Outputs:
+  ExternalUrl:
+    Description: The url of the external load balancer
+    Value: !Join ['', ['http://', !GetAtt Networking.Outputs.ExternalUrl]]
