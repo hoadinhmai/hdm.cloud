@@ -79,7 +79,7 @@ Resources:
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
-      ExecutionRoleArn: !Ref ECSTaskExecutionRole
+      ExecutionRoleArn: !Ref 'ECSTaskExecutionRole'
       TaskRoleArn:
         Fn::If:
           - 'HasCustomRole'
@@ -101,7 +101,7 @@ Resources:
     DependsOn: LoadBalancerRule
     Properties:
       ServiceName: !Ref 'ServiceName'
-      Cluster: !Ref ClusterName
+      Cluster: !Ref 'ClusterName'
       LaunchType: FARGATE
       DeploymentConfiguration:
         MaximumPercent: 200
@@ -110,7 +110,7 @@ Resources:
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
-          SecurityGroups: !Ref FargateContainerSecurityGroup
+          SecurityGroups: !Ref 'FargateContainerSecurityGroup'
           Subnets:
             - !Ref PrivateSubnetOne
             - !Ref PrivateSubnetTwo
@@ -138,7 +138,7 @@ Resources:
       Port: !Ref 'ContainerPort'
       Protocol: HTTP
       UnhealthyThresholdCount: 2
-      VpcId: !Ref VPCId
+      VpcId: !Ref 'VPCId'
 
   # Create a rule on the load balancer for routing traffic to the target group
   LoadBalancerRule:
@@ -150,5 +150,5 @@ Resources:
       Conditions:
         - Field: path-pattern
           Values: [!Ref 'Path']
-      ListenerArn: !Ref PublicListener
+      ListenerArn: !Ref 'PublicListener'
       Priority: !Ref 'Priority'
