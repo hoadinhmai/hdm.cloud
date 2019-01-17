@@ -113,8 +113,8 @@ Resources:
           SecurityGroups: 
             - !Ref 'FargateContainerSecurityGroup'
           Subnets:
-            - !Ref PrivateSubnetOne
-            - !Ref PrivateSubnetTwo
+            - !Ref 'PrivateSubnetOne'
+            - !Ref 'PrivateSubnetTwo'
       TaskDefinition: !Ref 'TaskDefinition'
       LoadBalancers:
         - ContainerName: !Ref 'ServiceName'
