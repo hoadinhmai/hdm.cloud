@@ -55,9 +55,9 @@ Parameters:
   FargateContainerSecurityGroup:
     Type: AWS::EC2::SecurityGroup::Id
   PrivateSubnetOne:
-    Type: List<AWS::EC2::Subnet::Id>
+    Type: String
   PrivateSubnetTwo:
-    Type: List<AWS::EC2::Subnet::Id>
+    Type: String
   VPCId:
     Type: AWS::EC2::VPC::Id
   PublicListener:
