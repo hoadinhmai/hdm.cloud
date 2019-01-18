@@ -27,4 +27,4 @@ Resources:
 Outputs:
   ExternalUrl:
     Description: The url of the external load balancer
-    Value: !Join ['', ['http://', !GetAtt Networking.Outputs.ExternalUrl]]
+    Value: !GetAtt Networking.Outputs.ExternalUrl

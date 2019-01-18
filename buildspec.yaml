@@ -5,10 +5,11 @@ phases:
      - echo "install step"
  pre_build:
    commands:
-     - echo "pre_build step"
+     - sed -i "s/CODEBUILD_BUILD_ID/$CODEBUILD_BUILD_ID/g" ./container/cfn-master.yaml
  build:
    commands:
     - aws s3 sync --delete . "s3://hdm.cloud" --exclude "*.y*ml" --acl "public-read"
+    - aws s3 cp container s3://hdm-s3-common-s3bucket-okportar9irk/$CODEBUILD_BUILD_ID/ --recursive
  post_build:
    commands:
      - echo "post_build step"
