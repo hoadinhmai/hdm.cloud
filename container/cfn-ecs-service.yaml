@@ -48,6 +48,20 @@ Parameters:
     Default: ""
     Description: (Optional) An IAM role to give the service's containers if the code within needs to
                  access other AWS resources like S3 buckets, DynamoDB tables, etc
+  ECSTaskExecutionRole:
+    Type: String
+  ClusterName:
+    Type: String
+  FargateContainerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+  PrivateSubnetOne:
+    Type: String
+  PrivateSubnetTwo:
+    Type: String
+  VPCId:
+    Type: AWS::EC2::VPC::Id
+  PublicListener:
+    Type: String
 
 Conditions:
   HasCustomRole: !Not [ !Equals [!Ref 'Role', ''] ]
@@ -65,9 +79,7 @@ Resources:
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
-      ExecutionRoleArn:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'StackName', 'ECSTaskExecutionRole']]
+      ExecutionRoleArn: !Ref 'ECSTaskExecutionRole'
       TaskRoleArn:
         Fn::If:
           - 'HasCustomRole'
@@ -89,9 +101,7 @@ Resources:
     DependsOn: LoadBalancerRule
     Properties:
       ServiceName: !Ref 'ServiceName'
-      Cluster:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'StackName', 'ClusterName']]
+      Cluster: !Ref 'ClusterName'
       LaunchType: FARGATE
       DeploymentConfiguration:
         MaximumPercent: 200
@@ -100,14 +110,11 @@ Resources:
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
-          SecurityGroups:
-            - Fn::ImportValue:
-                !Join [':', [!Ref 'StackName', 'FargateContainerSecurityGroup']]
+          SecurityGroups: 
+            - !Ref 'FargateContainerSecurityGroup'
           Subnets:
-            - Fn::ImportValue:
-                !Join [':', [!Ref 'StackName', 'PrivateSubnetOne']]
-            - Fn::ImportValue:
-                !Join [':', [!Ref 'StackName', 'PrivateSubnetTwo']]
+            - !Ref 'PrivateSubnetOne'
+            - !Ref 'PrivateSubnetTwo'
       TaskDefinition: !Ref 'TaskDefinition'
       LoadBalancers:
         - ContainerName: !Ref 'ServiceName'
@@ -132,9 +139,7 @@ Resources:
       Port: !Ref 'ContainerPort'
       Protocol: HTTP
       UnhealthyThresholdCount: 2
-      VpcId:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'StackName', 'VPCId']]
+      VpcId: !Ref 'VPCId'
 
   # Create a rule on the load balancer for routing traffic to the target group
   LoadBalancerRule:
@@ -146,7 +151,5 @@ Resources:
       Conditions:
         - Field: path-pattern
           Values: [!Ref 'Path']
-      ListenerArn:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'StackName', 'PublicListener']]
+      ListenerArn: !Ref 'PublicListener'
       Priority: !Ref 'Priority'
