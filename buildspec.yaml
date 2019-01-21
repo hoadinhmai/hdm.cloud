@@ -3,7 +3,7 @@ phases:
  install:
    commands:
      - sed -i "s/CODEBUILD_BUILD_ID/$CODEBUILD_BUILD_ID/g" ./container/cfn-master.yaml
- test:
+ pre_build:
    commands:
      - ./scripts/validate-template.sh
  build:
