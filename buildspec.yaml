@@ -2,10 +2,10 @@ version: 0.2
 phases:
  install:
    commands:
-     - echo "install step"
- pre_build:
-   commands:
      - sed -i "s/CODEBUILD_BUILD_ID/$CODEBUILD_BUILD_ID/g" ./container/cfn-master.yaml
+ test:
+   commands:
+     - ./scripts/validate-template.sh
  build:
    commands:
     - aws s3 sync --delete . "s3://hdm.cloud" --exclude "*.y*ml" --acl "public-read"
@@ -14,5 +14,6 @@ phases:
    commands:
      - echo "post_build step"
      - aws s3 rm s3://hdm.cloud/terraform --recursive
+     - aws s3 rm s3://hdm.cloud/scripts --recursive
      - aws s3 rm s3://hdm.cloud/Dockerfile
      - aws s3 rm s3://hdm.cloud/README.md

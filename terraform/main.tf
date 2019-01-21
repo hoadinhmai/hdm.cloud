@@ -112,6 +112,13 @@ resource "aws_iam_role_policy" "codebuild_policy" {
       ]
     },
     {
+      "Action": [
+          "cloudformation:ValidateTemplate"
+      ],
+      "Resource": "*",
+      "Effect": "Allow"
+    },
+    {
       "Effect": "Allow",
       "Resource": [
         "*"
