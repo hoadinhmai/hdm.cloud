@@ -17,3 +17,4 @@ phases:
      - aws s3 rm s3://hdm.cloud/scripts --recursive
      - aws s3 rm s3://hdm.cloud/Dockerfile
      - aws s3 rm s3://hdm.cloud/README.md
+     - aws s3 rm s3://hdm.cloud/packer.json
