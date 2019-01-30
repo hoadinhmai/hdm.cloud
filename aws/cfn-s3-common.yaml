@@ -1,0 +1,42 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'This CloudFormation template deploys an S3 bucket for common storage.'
+Parameters:
+  TestCodeBuildRole:
+    Type: String
+    Default: codebuild-Test-Project-service-role
+  CodeBuildRole:
+    Type: String
+    Default: codebuild-hdm-cloud-build-service-role
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+
+  S3BucketPolicy: 
+    Type: AWS::S3::BucketPolicy
+    Properties: 
+      Bucket: 
+        !Ref S3Bucket
+      PolicyDocument: 
+        Statement: 
+          - 
+            Action: 
+              - "s3:PutObject"
+            Effect: "Allow"
+            Resource: 
+              Fn::Join: 
+                - ""
+                - 
+                  - "arn:aws:s3:::"
+                  - 
+                    !Ref S3Bucket
+                  - "/*"
+            Principal: 
+              #Service: "codebuild.ap-southeast-2.amazonaws.com"
+              AWS: 
+                - !Sub 'arn:aws:iam::${AWS::AccountId}:role/service-role/${CodeBuildRole}'
+                - !Sub 'arn:aws:iam::${AWS::AccountId}:role/service-role/${TestCodeBuildRole}'
+
+Outputs:
+  S3Bucket:
+    Value: !Ref S3Bucket
+    Description: Name of S3 bucket
