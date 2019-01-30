@@ -1,0 +1,70 @@
+{
+    "variables": {
+        "aws_region": "{{env `AWS_REGION`}}"
+    },
+
+    "builders": [{
+        "type": "amazon-ebs",
+        "region": "{{user `aws_region`}}",
+        "subnet_id": "subnet-d8e0a1bf",
+        "instance_type": "t2.micro",
+        "ssh_username": "ubuntu",
+        "ami_name": "packer_AWS {{timestamp}}",
+        "ami_description": "Customized Amazon Linux Image",
+        "associate_public_ip_address": "true",
+        "source_ami_filter": {
+            "filters": {
+              "virtualization-type": "hvm",
+              "name": "ubuntu/images/*ubuntu-xenial-16.04-amd64-server-*",
+              "root-device-type": "ebs"
+            },
+            "owners": ["099720109477"],
+            "most_recent": true
+        }
+    }],
+
+    "provisioners": [
+        {
+            "type": "shell",
+            "inline": [
+                "sleep 5",
+                "sudo apt-get update -qq",
+                "sudo apt-get install python-pip python-dev -y",
+                "sudo pip install --upgrade pip==19.0.1",
+                "sudo pip install ansible==2.5.4.0"
+            ]
+        }, 
+        {
+            "type": "ansible-local",
+            "playbook_file": "ansible/playbook.yaml",
+            "role_paths": [
+                "ansible/roles/common"
+            ],
+            "playbook_dir": "ansible",
+            "galaxy_file": "ansible/requirements.yaml"
+        },
+        {
+            "type": "shell",
+            "inline": [
+                "rm .ssh/authorized_keys ; sudo rm /root/.ssh/authorized_keys"
+          ]
+        },
+        {
+            "type": "file",
+            "source": "./assets",
+            "destination": "/tmp"
+        },
+        {
+            "type": "file",
+            "source": "./index.html",
+            "destination": "/tmp/"
+        },
+        {
+          "type": "shell",
+          "inline": [
+            "sudo mv /tmp/assets /var/www/html",
+            "sudo mv /tmp/index.html /var/www/html/"
+          ]
+        }
+    ]
+}
