@@ -12,3 +12,6 @@ Provision AWS CodePipeline and CodeBuild project
 
 ## Container usage
 Each commit to master triggers a Gitlab CI build of a new Docker image (Nginx:alpine + static content). Image is pushed to Gitlab registry and ready to be consumed by ECS Fargate CloudFormation deployment.
+
+## Packer & Ansible usage
+packer.json template provisions an AMI with Nginx pre-installed via Ansible to host static content.
