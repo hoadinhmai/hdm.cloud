@@ -205,6 +205,51 @@ resource "aws_codepipeline" "codepipeline" {
   }
 }
 
+resource "aws_sns_topic" "sns-topic" {
+    name = "${var.pipeline_name}-sns-topic"
+}
+
+data "aws_iam_policy_document" "iam-policy" {
+    statement {
+        sid = "TrustCloudWatchEvents"
+        effect = "Allow"
+        resources = ["${aws_sns_topic.sns-topic.arn}"]
+        actions = ["sns:Publish"]
+        principals {
+            type = "Service"
+            identifiers = ["events.amazonaws.com"]
+        }
+    }
+}
+
+resource "aws_sns_topic_policy" "topic-policy" {
+    arn = "${aws_sns_topic.sns-topic.arn}"
+    policy = "${data.aws_iam_policy_document.iam-policy.json}"
+}
+
+resource "aws_cloudwatch_event_rule" "event-rule" {
+    name = "${var.pipeline_name}-cw-event-rule"
+    event_pattern = <<PATTERN
+{
+    "source": ["aws.codebuild"],
+    "detail-type": ["CodeBuild Build State Change"],
+    "detail": {
+        "build-status": [
+            "SUCCEEDED", 
+            "FAILED",
+            "STOPPED"
+        ]
+    }
+}
+PATTERN
+}
+
+resource "aws_cloudwatch_event_target" "event_target" {
+    target_id = "${var.pipeline_name}-cw-event-target"
+    rule = "${aws_cloudwatch_event_rule.event-rule.name}"
+    arn = "${aws_sns_topic.sns-topic.arn}"
+}
+
 terraform {
   backend "s3" {
     bucket = "hdm-common-storage"
