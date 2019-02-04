@@ -119,6 +119,19 @@ resource "aws_iam_role_policy" "codebuild_policy" {
       "Effect": "Allow"
     },
     {
+      "Action": [
+        "ssm:GetParameters",
+        "ssm:GetParameter",
+        "kms:Encrypt",
+        "kms:Decrypt",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*",
+        "kms:DescribeKey"
+      ],
+      "Resource": "*",
+      "Effect": "Allow"
+    },
+    {
       "Effect": "Allow",
       "Resource": [
         "*"
