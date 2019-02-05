@@ -7,6 +7,12 @@ env:
 phases:
  install:
    commands:
+     - export CODEBUILD_GIT_BRANCH="$(git symbolic-ref HEAD --short 2>/dev/null)"
+     - |
+       if [ "$CODEBUILD_GIT_BRANCH" = "" ] ; then
+          CODEBUILD_GIT_BRANCH="$(git branch -a --contains HEAD | sed -n 2p | awk '{ printf $1 }')";
+          export CODEBUILD_GIT_BRANCH=${CODEBUILD_GIT_BRANCH#remotes/origin/};
+       fi
      - cd /usr/bin
      - "curl -s -qL -o terraform.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip"
      - unzip -o terraform.zip
@@ -14,7 +20,7 @@ phases:
      - cd $CODEBUILD_SRC_DIR
      - sed -i "s/CODEBUILD_BUILD_ID/$CODEBUILD_BUILD_ID/g" ./aws/cfn-master.yaml
      - |
-        if [ "$CODEBUILD_SOURCE_VERSION" = "master" ]
+        if [ "$CODEBUILD_GIT_BRANCH" = "master" ]
         then
             export BUCKET_NAME="hdm.cloud"
         else
