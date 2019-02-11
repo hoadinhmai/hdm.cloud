@@ -14,11 +14,13 @@ phases:
      - cd $CODEBUILD_SRC_DIR
      - sed -i "s/CODEBUILD_BUILD_ID/$CODEBUILD_BUILD_ID/g" ./aws/cfn-master.yaml
      - |
-        if [[ "${CODEBUILD_BUILD_ARN}" == *"build/hdm-cloud-"* ]]
+        if [[ "${CODEBUILD_BUILD_ARN}" == *"build/hdm-cloud-codebuild"* ]]
         then
             export BUCKET_NAME="hdm.cloud"
+        fi
      - |
         if [[ "${CODEBUILD_BUILD_ARN}" == *"build/hdm-cloud-dev"* ]]
+        then
             export BUCKET_NAME="beta.hdm.cloud"
         fi
 
