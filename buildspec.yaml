@@ -7,25 +7,21 @@ env:
 phases:
  install:
    commands:
-     - export CODEBUILD_GIT_BRANCH="$(git symbolic-ref HEAD --short 2>/dev/null)"
-     - |
-       if [ "$CODEBUILD_GIT_BRANCH" = "" ] ; then
-          CODEBUILD_GIT_BRANCH="$(git branch -a --contains HEAD | sed -n 2p | awk '{ printf $1 }')";
-          export CODEBUILD_GIT_BRANCH=${CODEBUILD_GIT_BRANCH#remotes/origin/};
-       fi
      - cd /usr/bin
      - "curl -s -qL -o terraform.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip"
      - unzip -o terraform.zip
      - export GITHUB_TOKEN=$(aws ssm get-parameter --name "github_token" --with-decryption --output text --query 'Parameter.Value')
      - cd $CODEBUILD_SRC_DIR
      - sed -i "s/CODEBUILD_BUILD_ID/$CODEBUILD_BUILD_ID/g" ./aws/cfn-master.yaml
+     - |    
+       if expr "${CODEBUILD_BUILD_ARN}" : ".*build/hdm-cloud-codebuild" >/dev/null; then
+          export BUCKET_NAME="hdm.cloud"
+       fi
      - |
-        if [ "$CODEBUILD_GIT_BRANCH" = "master" ]
-        then
-            export BUCKET_NAME="hdm.cloud"
-        else
-            export BUCKET_NAME="beta.hdm.cloud"
-        fi
+       if expr "${CODEBUILD_BUILD_ARN}" : ".*build/hdm-cloud-dev" >/dev/null; then
+          export BUCKET_NAME="beta.hdm.cloud"
+       fi
+     - echo $BUCKET_NAME
 
  pre_build:
    commands:
@@ -43,5 +39,6 @@ phases:
      - aws s3 rm "s3://$BUCKET_NAME/terraform" --recursive
      - aws s3 rm "s3://$BUCKET_NAME/scripts" --recursive
      - aws s3 rm "s3://$BUCKET_NAME/Dockerfile"
+     - aws s3 rm "s3://$BUCKET_NAME/Makefile"
      - aws s3 rm "s3://$BUCKET_NAME/README.md"
      - aws s3 rm "s3://$BUCKET_NAME/packer.json"
