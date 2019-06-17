@@ -5,7 +5,7 @@ variable "aws_region" {
 
 variable "pipeline_name" {
   type    = "string"
-  default = "hdm-cloud"
+  default = "hdm-cloud-dev"
 }
 
 variable "github_username" {

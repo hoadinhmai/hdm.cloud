@@ -193,7 +193,7 @@ resource "aws_codepipeline" "codepipeline" {
         Owner                = "${var.github_username}"
         OAuthToken           = "${var.github_token}"
         Repo                 = "${var.github_repo}"
-        Branch               = "master"
+        Branch               = "develop"
         PollForSourceChanges = "true"
       }
     }
@@ -266,7 +266,7 @@ resource "aws_cloudwatch_event_target" "event_target" {
 terraform {
   backend "s3" {
     bucket = "hdm-common-storage"
-    key    = "terraform/state"
+    key    = "terraform/state-dev"
     region = "ap-southeast-2"
   }
 }
