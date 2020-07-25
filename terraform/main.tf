@@ -1,10 +1,15 @@
 provider "aws" {
-  region     = "${var.aws_region}"
+  version = "~> 2.0"
+  region = var.aws_region
 }
 
-resource "aws_s3_bucket" "build_artifact_bucket" {
-  bucket = "${var.pipeline_name}-artifact-bucket"
+resource "aws_s3_bucket" "codepipeline_bucket" {
+  bucket = "${var.pipeline_name}-codepipeline-bucket-${var.stage}"
   acl    = "private"
+}
+
+data "aws_ssm_parameter" "github_token" {
+  name = "github_token"
 }
 
 data "aws_iam_policy_document" "codepipeline_assume_policy" {
@@ -20,13 +25,13 @@ data "aws_iam_policy_document" "codepipeline_assume_policy" {
 }
 
 resource "aws_iam_role" "codepipeline_role" {
-  name               = "${var.pipeline_name}-codepipeline-role"
-  assume_role_policy = "${data.aws_iam_policy_document.codepipeline_assume_policy.json}"
+  name               = "${var.pipeline_name}-codepipeline-role-${var.stage}"
+  assume_role_policy = data.aws_iam_policy_document.codepipeline_assume_policy.json
 }
 
-resource "aws_iam_role_policy" "attach_codepipeline_policy" {
-  name = "${var.pipeline_name}-codepipeline-policy"
-  role = "${aws_iam_role.codepipeline_role.id}"
+resource "aws_iam_role_policy" "codepipeline_policy" {
+  name = "${var.pipeline_name}-codepipeline-policy-${var.stage}"
+  role = aws_iam_role.codepipeline_role.id
 
   policy = <<EOF
 {
@@ -64,7 +69,7 @@ EOF
 }
 
 resource "aws_iam_role" "codebuild_assume_role" {
-  name = "${var.pipeline_name}-codebuild-role"
+  name = "${var.pipeline_name}-codebuild-role-${var.stage}"
 
   assume_role_policy = <<EOF
 {
@@ -80,11 +85,16 @@ resource "aws_iam_role" "codebuild_assume_role" {
   ]
 }
 EOF
+
+  tags = {
+    Service = local.tags["service"]
+    Owner   = local.tags["owner"]
+  }
 }
 
 resource "aws_iam_role_policy" "codebuild_policy" {
   name = "${var.pipeline_name}-codebuild-policy"
-  role = "${aws_iam_role.codebuild_assume_role.id}"
+  role = aws_iam_role.codebuild_assume_role.id
 
   policy = <<POLICY
 {
@@ -148,9 +158,9 @@ POLICY
 }
 
 resource "aws_codebuild_project" "build_project" {
-  name          = "${var.pipeline_name}-codebuild"
-  description   = "The CodeBuild project for ${var.pipeline_name}"
-  service_role  = "${aws_iam_role.codebuild_assume_role.arn}"
+  name          = "${var.pipeline_name}-codebuild-${var.stage}"
+  description   = "CodeBuild project for ${var.pipeline_name} - ${var.stage}"
+  service_role  = aws_iam_role.codebuild_assume_role.arn
   build_timeout = "30"
 
   artifacts {
@@ -170,11 +180,11 @@ resource "aws_codebuild_project" "build_project" {
 }
 
 resource "aws_codepipeline" "codepipeline" {
-  name     = "${var.pipeline_name}-codepipeline"
-  role_arn = "${aws_iam_role.codepipeline_role.arn}"
+  name     = "${var.pipeline_name}-codepipeline-${var.stage}"
+  role_arn = aws_iam_role.codepipeline_role.arn
 
-  artifact_store = {
-    location = "${aws_s3_bucket.build_artifact_bucket.bucket}"
+  artifact_store {
+    location = aws_s3_bucket.codepipeline_bucket.bucket
     type     = "S3"
   }
 
@@ -187,13 +197,13 @@ resource "aws_codepipeline" "codepipeline" {
       owner            = "ThirdParty"
       provider         = "GitHub"
       version          = "1"
-      output_artifacts = ["code"]
+      output_artifacts = ["source_output"]
 
-      configuration {
-        Owner                = "${var.github_username}"
-        OAuthToken           = "${var.github_token}"
-        Repo                 = "${var.github_repo}"
-        Branch               = "develop"
+      configuration = {
+        Owner                = var.github_username
+        OAuthToken           = data.aws_ssm_parameter.github_token.value
+        Repo                 = var.github_repo
+        Branch               = local.stage["branch"]
         PollForSourceChanges = "true"
       }
     }
@@ -207,42 +217,42 @@ resource "aws_codepipeline" "codepipeline" {
       category         = "Build"
       owner            = "AWS"
       provider         = "CodeBuild"
-      input_artifacts  = ["code"]
+      input_artifacts  = ["source_output"]
       output_artifacts = ["deployed"]
       version          = "1"
 
-      configuration {
-        ProjectName = "${aws_codebuild_project.build_project.name}"
+      configuration = {
+        ProjectName = aws_codebuild_project.build_project.name
       }
     }
   }
 }
 
 resource "aws_sns_topic" "sns-topic" {
-    name = "${var.pipeline_name}-sns-topic"
+  name = "${var.pipeline_name}-sns-topic-${var.stage}"
 }
 
 data "aws_iam_policy_document" "iam-policy" {
-    statement {
-        sid = "TrustCloudWatchEvents"
-        effect = "Allow"
-        resources = ["${aws_sns_topic.sns-topic.arn}"]
-        actions = ["sns:Publish"]
-        principals {
-            type = "Service"
-            identifiers = ["events.amazonaws.com"]
-        }
-    }
+  statement {
+      sid = "TrustCloudWatchEvents"
+      effect = "Allow"
+      resources = ["${aws_sns_topic.sns-topic.arn}"]
+      actions = ["sns:Publish"]
+      principals {
+          type = "Service"
+          identifiers = ["events.amazonaws.com"]
+      }
+  }
 }
 
 resource "aws_sns_topic_policy" "topic-policy" {
-    arn = "${aws_sns_topic.sns-topic.arn}"
-    policy = "${data.aws_iam_policy_document.iam-policy.json}"
+  arn = aws_sns_topic.sns-topic.arn
+  policy = data.aws_iam_policy_document.iam-policy.json
 }
 
 resource "aws_cloudwatch_event_rule" "event-rule" {
-    name = "${var.pipeline_name}-cw-event-rule"
-    event_pattern = <<PATTERN
+  name = "${var.pipeline_name}-cw-event-rule-${var.stage}"
+  event_pattern = <<PATTERN
 {
     "source": ["aws.codebuild"],
     "detail-type": ["CodeBuild Build State Change"],
@@ -258,15 +268,7 @@ PATTERN
 }
 
 resource "aws_cloudwatch_event_target" "event_target" {
-    target_id = "${var.pipeline_name}-cw-event-target"
-    rule = "${aws_cloudwatch_event_rule.event-rule.name}"
-    arn = "${aws_sns_topic.sns-topic.arn}"
-}
-
-terraform {
-  backend "s3" {
-    bucket = "hdm-common-storage"
-    key    = "terraform/state-dev"
-    region = "ap-southeast-2"
-  }
+  target_id = "${var.pipeline_name}-cw-event-target-${var.stage}"
+  rule = aws_cloudwatch_event_rule.event-rule.name
+  arn = aws_sns_topic.sns-topic.arn
 }

@@ -1,23 +1,23 @@
 variable "aws_region" {
-  type    = "string"
+  type    = string
   default = "ap-southeast-2"
 }
 
+variable "stage" {
+  type = string
+}
+
 variable "pipeline_name" {
-  type    = "string"
-  default = "hdm-cloud-dev"
+  type    = string
+  default = "hdm-cloud"
 }
 
 variable "github_username" {
-  type    = "string"
+  type    = string
   default = "hoadinhmai"
 }
 
-variable "github_token" {
-  type = "string"
-}
-
 variable "github_repo" {
-  type = "string"
+  type    = string
   default = "hdm.cloud"
 }
