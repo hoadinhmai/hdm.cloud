@@ -29,6 +29,7 @@ phases:
      - cd terraform && make init stage=$STAGE && make validate
  build:
    commands:
+    - cd $CODEBUILD_SRC_DIR
     - aws s3 sync --delete assets "s3://$BUCKET_NAME/assets" --acl "public-read"
     - aws s3 cp index.html "s3://$BUCKET_NAME/index.html" --acl "public-read"
     - aws s3 cp aws s3://hdm-s3-common-s3bucket-okportar9irk/$CODEBUILD_BUILD_ID/ --recursive
