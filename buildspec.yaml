@@ -35,4 +35,4 @@ phases:
  post_build:
    commands:
      - echo "post_build step"
-     - curl -v "https://$BUCKET_NAME
+     - curl -v "https://$BUCKET_NAME"
