@@ -20,7 +20,8 @@ phases:
           export BUCKET_NAME="beta.hdm.cloud"
           export STAGE=dev
        fi
-     - echo "Website bucket: $BUCKET_NAME \nStage: $STAGE"
+     - |
+      echo "Website bucket: $BUCKET_NAME \nStage: $STAGE"
  pre_build:
    commands:
      - chmod +x ./scripts/validate-template.sh
