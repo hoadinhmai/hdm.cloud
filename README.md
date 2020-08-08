@@ -14,5 +14,5 @@ Creates a CodePipeline and CodeBuild project for deploying static content to S3
 Each commit to master triggers a Gitlab CI build of a new Docker image (Nginx:alpine + static content).  
 Image is pushed to Gitlab registry and ready to be consumed by ECS Fargate CloudFormation deployment.
 
-## Packer & Ansible usage
-packer.json template provisions an AMI with Nginx pre-installed via Ansible to host static content on EC2.
+## Packer usage
+packer.json template provisions an AMI with Nginx installed to host static content on EC2.
