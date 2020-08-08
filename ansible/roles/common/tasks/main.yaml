@@ -1,6 +1,0 @@
----
-
-- name: Update package "nginx" to latest version
-  apt:
-    name: nginx
-    state: latest

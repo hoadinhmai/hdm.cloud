@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    TF_VERSION: "0.11.11"
+    TF_VERSION: "0.12.29"
 
 phases:
  install:
@@ -10,35 +10,30 @@ phases:
      - cd /usr/bin
      - "curl -s -qL -o terraform.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip"
      - unzip -o terraform.zip
-     - export GITHUB_TOKEN=$(aws ssm get-parameter --name "github_token" --with-decryption --output text --query 'Parameter.Value')
      - cd $CODEBUILD_SRC_DIR
      - sed -i "s/CODEBUILD_BUILD_ID/$CODEBUILD_BUILD_ID/g" ./aws/cfn-master.yaml
      - |    
-       if expr "${CODEBUILD_BUILD_ARN}" : ".*build/hdm-cloud-codebuild" >/dev/null; then
+       if expr "${CODEBUILD_BUILD_ARN}" : ".*build/hdm-cloud-codebuild-prod" >/dev/null; then
           export BUCKET_NAME="hdm.cloud"
+          export STAGE=prod
+       else
+          export BUCKET_NAME="beta.hdm.cloud"
+          export STAGE=dev
        fi
      - |
-       if expr "${CODEBUILD_BUILD_ARN}" : ".*build/hdm-cloud-dev" >/dev/null; then
-          export BUCKET_NAME="beta.hdm.cloud"
-       fi
-     - echo $BUCKET_NAME
-
+      echo "Website bucket: $BUCKET_NAME \nStage: $STAGE"
  pre_build:
    commands:
      - chmod +x ./scripts/validate-template.sh
      - ./scripts/validate-template.sh
-     - make terraform-init
-     - make terraform-validate
+     - cd terraform && make init stage=$STAGE && make validate
  build:
    commands:
-    - aws s3 sync --delete . "s3://$BUCKET_NAME" --exclude "*.y*ml" --acl "public-read"
+    - cd $CODEBUILD_SRC_DIR
+    - aws s3 sync --delete assets "s3://$BUCKET_NAME/assets" --acl "public-read"
+    - aws s3 cp index.html "s3://$BUCKET_NAME/index.html" --acl "public-read"
     - aws s3 cp aws s3://hdm-s3-common-s3bucket-okportar9irk/$CODEBUILD_BUILD_ID/ --recursive
  post_build:
    commands:
      - echo "post_build step"
-     - aws s3 rm "s3://$BUCKET_NAME/terraform" --recursive
-     - aws s3 rm "s3://$BUCKET_NAME/scripts" --recursive
-     - aws s3 rm "s3://$BUCKET_NAME/Dockerfile"
-     - aws s3 rm "s3://$BUCKET_NAME/Makefile"
-     - aws s3 rm "s3://$BUCKET_NAME/README.md"
-     - aws s3 rm "s3://$BUCKET_NAME/packer.json"
+     - curl -v "https://$BUCKET_NAME"
