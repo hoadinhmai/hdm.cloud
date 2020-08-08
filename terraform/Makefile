@@ -11,11 +11,13 @@ validate:
 	terraform validate
 
 plan:
-	terraform workspace select $(stage) || terraform workspace new $(stage)
-	terraform plan -input=false -out=tfplan -var="stage=$(stage)"
+	terraform workspace select ${stage} || terraform workspace new ${stage}
+	terraform plan -input=false -out=tfplan -var="stage=${stage}"
 
 apply:
 	terraform apply -input=false tfplan
 
 destroy:
-	terraform destroy -var="stage=$(stage)"
+	terraform destroy -var="stage=${stage}"
+
+infra: init plan apply stage=${stage}
